@@ -9,18 +9,20 @@ At the moment, CMSs supported by CMSmap are WordPress, Joomla and Drupal.
 Please note that this project is an early state. As such, you might find bugs, flaws or mulfunctions.
 Use it at your own risk!
 
+This is a fork of CMSmap by Dionach. This version replaces the online exploit-db search with an offline verion via the searchsploit t
+ool.
 
 Installation
 =====
-You can download the latest version of CMSmap by cloning the GitHub repository:
+You can download the latest version of this fork of CMSmap by cloning the GitHub repository:
 
-	git clone https://github.com/Dionach/CMSmap.git
+	git clone https://github.com/cyberisltd/CMSmap.git
 
 
 Usage
 =====
-	CMSmap tool v0.6 - Simple CMS Scanner
-	Author: Mike Manzotti mike.manzotti@dionach.com
+	CMSmap tool v0.7 - Simple CMS Scanner
+	Author: Mike Manzotti mike.manzotti@dionach.com, Phil Wilcox phil.wilcox@cyberis.co.uk
 	Usage: cmsmap.py -t <URL>
 	Targets:
 		 -t, --target    target URL (e.g. 'https://example.com:8080/')
@@ -56,6 +58,8 @@ Usage
 
 Notes
 =====
+22/08/2017: Forked by Cyberis Ltd with the addition of offline exploit-db search. This requires installation of the exploit-db serachsploit tool in /opt/exploit-database.
+
 30/03/2015: Created a new repo to remove big wordlist. Users who have originally cloned the previous repo are invited to clone the new one.
   
 	

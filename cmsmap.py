@@ -2,8 +2,11 @@
 import smtplib, base64, os, sys, getopt, urllib2, urllib, re, socket, time, httplib, tarfile
 import itertools, urlparse, threading, Queue, multiprocessing, cookielib, datetime, zipfile
 import platform, signal
+import subprocess
+import json
 from thirdparty.multipart import multipartpost
 from distutils.version import LooseVersion
+
 
 class Initialize:
     def __init__(self):
@@ -1104,25 +1107,23 @@ class ExploitDBSearch:
         if self.query is not None:
             # Get this value from their classes      
             msg = "Searching Core Vulnerabilities for version "+self.query ; report.verbose(msg)           
-            htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"+"+self.query).read()
-            regex = '/download/(.+?)/">'
-            pattern =  re.compile(regex)
-            ExploitID = re.findall(pattern,htmltext)
-            for Eid in ExploitID:
+            dbText = subprocess.run("searchsploit --colour --json "+self.query+" "+self.cmstype, shell=True, stdout=subprocess.PIPE)
+            Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
+            for Exploit in Exploits('RESULTS'):
                 # If Eid hasn't been already found, then go on
-                if Eid not in self.flagged:
-                    req = urllib2.Request("http://www.exploit-db.com/exploits/"+str(Eid)+"/",None,self.headers)
-                    htmltext = urllib2.urlopen(req).read()
-                    self.title = re.findall(re.compile('<title>(.+?)</title>'),htmltext)
-                    self.date = re.findall(re.compile('>Published: (.+?)</td>'),htmltext)
+                if Exploit['EDB-ID'] not in self.flagged:
+                    self.title = Exploit['Exploit']
+                    self.date = Exploit['Date']
                     self.verified = 'Yes'
-                    if re.search(re.compile('Not Verified'),htmltext): self.verified = 'No '
+                    with open(Exploit['Path']) as f:
+                        if 'Not Verified' in f.read():
+                            self.verified = 'No'
                     if self.title and self.date:
-                        msg = " EDB-ID: "+Eid+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
+                        msg = " EDB-ID: "+Exploit['EDB-ID']+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
                         report.medium(msg)
                     else:
-                        msg = " EDB-ID: "+Eid; report.medium(msg)
-            self.flagged = self.flagged + ExploitID
+                        msg = " EDB-ID: "+Exploit['EDB-ID']; report.medium(msg)
+            self.flagged = self.flagged + Exploit['EDB-ID']
             self.flagged = sorted(set(self.flagged))
         else:
             pass
@@ -1133,26 +1134,24 @@ class ExploitDBSearch:
             for plugin in self.query:
                 msg =  plugin; report.info(msg)
                 if not NoExploitdb :
-                    htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"&filter_exploit_text="+plugin).read()
-                    regex = '/download/(.+?)/">'
-                    pattern =  re.compile(regex)
-                    ExploitID = re.findall(pattern,htmltext)
+                    dbText = subprocess.run("searchsploit --colour --json "+plugin+" "+self.cmstype, shell=True, stdout=subprocess.PIPE)
+                    Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
                     if plugin not in self.exclude:
-                        for Eid in ExploitID:
+                        for Exploit in Exploits:
                             # If Eid hasn't been already found, then go on
-                            if Eid not in self.flagged:
-                                req = urllib2.Request("http://www.exploit-db.com/exploits/"+str(Eid)+"/",None,self.headers)
-                                htmltext = urllib2.urlopen(req).read()
-                                self.title = re.findall(re.compile('<title>(.+?)</title>'),htmltext)
-                                self.date = re.findall(re.compile('>Published: (.+?)</td>'),htmltext)
+                            if Exploit['EDB-ID'] not in self.flagged:
+                                self.title = Exploit['Exploit']
+                                self.date = Exploit['Date']
                                 self.verified = 'Yes'
-                                if re.search(re.compile('Not Verified'),htmltext): self.verified = 'No '
+                                with open(Exploit['Path']) as f:
+                                    if 'Not Verified' in f.read():
+                                        self.verified = 'No'
                                 if self.title and self.date:
-                                    msg = " EDB-ID: "+Eid+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
+                                    msg = " EDB-ID: "+Exploit['EDB-ID']+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
                                     report.medium(msg)
                                 else:
-                                    msg = " EDB-ID: "+Eid; report.medium(msg)
-                        self.flagged = self.flagged + ExploitID
+                                    msg = " EDB-ID: "+Exploit['EDB-ID']; report.medium(msg)
+                        self.flagged = self.flagged + Exploit['EDB-ID']
                         self.flagged = sorted(set(self.flagged))
         else:
             pass
@@ -1161,25 +1160,23 @@ class ExploitDBSearch:
         if self.query is not None:
             msg = "Searching Vulnerable Theme from ExploitDB website ..."; report.verbose(msg)
             for theme in self.query :
-                htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"&filter_exploit_text="+theme).read()
-                regex = '/download/(.+?)/">'
-                pattern =  re.compile(regex)
-                ExploitID = re.findall(pattern,htmltext)
-                for Eid in ExploitID:
+                dbText = subprocess.run("searchsploit --colour --json "+theme+" "+self.cmstype, shell=True, stdout=subprocess.PIPE)
+                Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
+                for Exploit in Exploits:
                     # If Eid hasn't been already found, then go on
-                    if Eid not in self.flagged:
-                        req = urllib2.Request("http://www.exploit-db.com/exploits/"+str(Eid)+"/",None,self.headers)
-                        htmltext = urllib2.urlopen(req).read()
-                        self.title = re.findall(re.compile('<title>(.+?)</title>'),htmltext)
-                        self.date = re.findall(re.compile('>Published: (.+?)</td>'),htmltext)
+                    if Exploit['EDB-ID'] not in self.flagged:
+                        self.title = Exploit['Exploit']
+                        self.date = Exploit['Date']
                         self.verified = 'Yes'
-                        if re.search(re.compile('Not Verified'),htmltext): self.verified = 'No '
+                        with open(Exploit['Path']) as f:
+                            if 'Not Verified' in f.read():
+                                self.verified = 'No'
                         if self.title and self.date:
-                            msg = " EDB-ID: "+Eid+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
+                            msg = " EDB-ID: "+Exploit['EDB-ID']+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
                             report.medium(msg)
                         else:
-                            msg = " EDB-ID: "+Eid; report.medium(msg)
-                self.flagged = self.flagged + ExploitID
+                            msg = " EDB-ID: "+Exploit['EDB-ID']; report.medium(msg)
+                self.flagged = self.flagged + Exploit['EDB-ID']
                 self.flagged = sorted(set(self.flagged))                
         else:
             pass
