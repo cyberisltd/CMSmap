@@ -16,7 +16,7 @@
 
 import urllib.request, urllib.parse, urllib.error
 import urllib.request, urllib.error, urllib.parse
-import mimetools, mimetypes
+import email, mimetypes
 import os, stat
 import sys
 
@@ -61,7 +61,7 @@ class MultipartPostHandler(urllib.request.BaseHandler):
 
     def multipart_encode(vars, files, boundary = None, buffer = None):
         if boundary is None:
-            boundary = mimetools.choose_boundary()
+            boundary = email.choose_boundary()
         if buffer is None:
             buffer = ''
         for(key, value) in vars:

