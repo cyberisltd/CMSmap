@@ -18,6 +18,11 @@ You can download the latest version of this fork of CMSmap by cloning the GitHub
 
 	git clone https://github.com/cyberisltd/CMSmap.git
 
+Dependencies
+============
+
+This version of CMSmap needs access to the exploit-db 'searchsploit' tool which can be found here:
+[https://github.com/offensive-security/exploit-database](https://github.com/offensive-security/exploit-database)
 
 Usage
 =====
