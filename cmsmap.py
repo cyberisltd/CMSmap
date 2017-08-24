@@ -1111,7 +1111,7 @@ class ExploitDBSearch:
             try:
                 Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
             except json.decoder.JSONDecodeError:
-                next
+                Exploits = []
             for Exploit in Exploits['RESULTS']:
                 # If Eid hasn't been already found, then go on
                 if Exploit['EDB-ID'] not in self.flagged:
@@ -1141,7 +1141,7 @@ class ExploitDBSearch:
                     try:
                         Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
                     except json.decoder.JSONDecodeError:
-                        next
+                        continue
                     if plugin not in self.exclude:
                         for Exploit in Exploits['RESULTS']:
                             # If Eid hasn't been already found, then go on
@@ -1170,7 +1170,7 @@ class ExploitDBSearch:
                 try:
                     Exploits = json.loads(dbText.stdout.decode().replace("}\n","},\n").replace("},\n\t]\n},\n","}\n\t]\n}"))
                 except json.decoder.JSONDecodeError:
-                    next
+                    continue
                 for Exploit in Exploits['RESULTS']:
                     # If Eid hasn't been already found, then go on
                     if Exploit['EDB-ID'] not in self.flagged:
